@@ -6,21 +6,35 @@ import (
 	"testing"
 )
 
+func mustUnsetEnv(t *testing.T, k string) {
+	t.Helper()
+	if err := os.Unsetenv(k); err != nil {
+		t.Fatalf("failed to unset env %s: %v", k, err)
+	}
+}
+
+func mustSetEnv(t *testing.T, k, v string) {
+	t.Helper()
+	if err := os.Setenv(k, v); err != nil {
+		t.Fatalf("failed to set env %s: %v", k, err)
+	}
+}
+
 func TestLoadConfig_Defaults(t *testing.T) {
 	// Ensure env is clean for these vars
 	envVars := []string{"VOLUMES", "SERIAL_PORT", "BAUD_RATE", "CRON", "HOST_PROC", "HOST_SYS"}
 	old := make(map[string]string)
 	for _, k := range envVars {
 		old[k] = os.Getenv(k)
-		os.Unsetenv(k)
+		mustUnsetEnv(t, k)
 	}
 	// restore env after
 	defer func() {
 		for k, v := range old {
 			if v == "" {
-				os.Unsetenv(k)
+				mustUnsetEnv(t, k)
 			} else {
-				os.Setenv(k, v)
+				mustSetEnv(t, k, v)
 			}
 		}
 	}()
@@ -60,19 +74,19 @@ func TestLoadConfig_EnvOverrides(t *testing.T) {
 	defer func() {
 		for k, v := range old {
 			if v == "" {
-				os.Unsetenv(k)
+				mustUnsetEnv(t, k)
 			} else {
-				os.Setenv(k, v)
+				mustSetEnv(t, k, v)
 			}
 		}
 	}()
 
-	os.Setenv("VOLUMES", "/data,/var")
-	os.Setenv("SERIAL_PORT", "/dev/ttyUSB0")
-	os.Setenv("BAUD_RATE", "9600")
-	os.Setenv("CRON", "* * * * *")
-	os.Setenv("HOST_PROC", "/my/proc")
-	os.Setenv("HOST_SYS", "/my/sys")
+	mustSetEnv(t, "VOLUMES", "/data,/var")
+	mustSetEnv(t, "SERIAL_PORT", "/dev/ttyUSB0")
+	mustSetEnv(t, "BAUD_RATE", "9600")
+	mustSetEnv(t, "CRON", "* * * * *")
+	mustSetEnv(t, "HOST_PROC", "/my/proc")
+	mustSetEnv(t, "HOST_SYS", "/my/sys")
 
 	cfg := LoadConfig()
 
